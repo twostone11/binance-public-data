@@ -4,13 +4,14 @@ import sys
 import glob
 import pandas as pd
 from datetime import *
-
 from argparse import ArgumentParser, RawTextHelpFormatter, ArgumentTypeError
+from pathlib import Path
+
 
 
 
 def get_parser():
-  parser = ArgumentParser(description=("This is a script to extrate zip file in directory"), formatter_class=RawTextHelpFormatter)
+  parser = ArgumentParser(description=("This is a script to process file in directory"), formatter_class=RawTextHelpFormatter)
   parser.add_argument(
       '-f', dest='folder',
       default='D:\\open_source\\backtrader\\datas\\binance',
@@ -74,6 +75,8 @@ def merge_kilines_func(directory_to_scan, daily_path_list, directory_to_save):
         combined_df = pd.concat([combined_df, df], ignore_index=True)
 
     for daily_path in daily_path_list:
+        if not os.path.exists(daily_path):
+            continue
         df = pd.read_csv(daily_path,
                          names=column_names,
                          header=None,
@@ -93,6 +96,9 @@ if __name__ == "__main__":
     directory_to_scan = generate_monthly_path_pattern(args.folder, args.type, args.symbol, args.interval)
     directory_to_save = generate_final_path_to_save(args.folder, args.type, args.symbol, args.interval)
     daily_path_list = generate_daily_path_list(args.folder, args.type, args.symbol, args.interval)
+
+    directory = Path(os.path.dirname(directory_to_save))
+    directory.mkdir(parents=True, exist_ok=True)
 
     merge_kilines_func(directory_to_scan, daily_path_list, directory_to_save)
 
