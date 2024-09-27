@@ -6,6 +6,7 @@ import pandas as pd
 from datetime import *
 from argparse import ArgumentParser, RawTextHelpFormatter, ArgumentTypeError
 from pathlib import Path
+import arrow
 
 
 
@@ -31,12 +32,20 @@ def get_parser():
   return parser
 
 def generate_monthly_path_pattern(top_dir, type, symbol, interval):
-    return os.path.join(top_dir, "data", type, "monthly", "klines", symbol,
-                        interval, "{}-{}-????-??.csv".format(symbol, interval))
+    if type == 'um' or type == 'cm':
+        return os.path.join(top_dir, "data", 'futures', type, "monthly", "klines", symbol,
+                            interval, "{}-{}-????-??.csv".format(symbol, interval))
+    else:
+        return os.path.join(top_dir, "data", type, "monthly", "klines", symbol,
+                            interval, "{}-{}-????-??.csv".format(symbol, interval))
 
 def generate_final_path_to_save(top_dir, type, symbol, interval):
-    return os.path.join(top_dir, "data", type, "final", "klines", symbol,
-                        interval, "{}-{}.csv".format(symbol, interval))
+    if type == 'um' or type == 'cm':
+        return os.path.join(top_dir, "data", 'futures', type, "final", "klines", symbol,
+                            interval, "{}-{}.csv".format(symbol, interval))
+    else:
+        return os.path.join(top_dir, "data", type, "final", "klines", symbol,
+                            interval, "{}-{}.csv".format(symbol, interval))
 
 def convert_to_date_object(d):
   year, month, day = [int(x) for x in d.split('-')]
@@ -59,6 +68,19 @@ def generate_daily_path_list(top_dir, type, symbol, interval):
     return daily_path_list
 
 
+def has_header(file_path):
+    try:
+        # 尝试读取前两行数据
+        df_head = pd.read_csv(file_path, nrows=2)
+        # 如果第一行和第二行完全相同，那么可能没有表头
+        if df_head.iloc[0].equals(df_head.iloc[1]):
+            return False
+        else:
+            return True
+    except Exception as e:
+        # 如果读取过程中出现错误，假设没有表头
+        return False
+
 def merge_kilines_func(directory_to_scan, daily_path_list, directory_to_save):
     csv_files = glob.glob(directory_to_scan, recursive=False)
     column_names = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'Close time', 'Quote asset volume',
@@ -67,11 +89,18 @@ def merge_kilines_func(directory_to_scan, daily_path_list, directory_to_save):
     date_parser = lambda x: pd.to_datetime(x, unit='ms')
     combined_df = pd.DataFrame()
     for file in csv_files:
-        df = pd.read_csv(file,
-                         names=column_names,
-                         header=None,
-                         parse_dates=[0],
-                         date_parser=date_parser)
+        if has_header(file):
+            df = pd.read_csv(file,
+                             names=column_names,
+                             header=1,
+                             parse_dates=[0],
+                             date_parser=date_parser)
+        else:
+            df = pd.read_csv(file,
+                             names=column_names,
+                             header=None,
+                             parse_dates=[0],
+                             date_parser=date_parser)
         combined_df = pd.concat([combined_df, df], ignore_index=True)
 
     for daily_path in daily_path_list:
