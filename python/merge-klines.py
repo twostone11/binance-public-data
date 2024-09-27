@@ -62,9 +62,14 @@ def get_dates_list():
 def generate_daily_path_list(top_dir, type, symbol, interval):
     date_list = get_dates_list()
     daily_path_list = []
-    for dateitem in date_list:
-        daily_path_list.append(os.path.join(top_dir, "data", type, "daily", "klines", symbol,
-                        interval, "{}-{}-{}.csv".format(symbol, interval, dateitem)))
+    if type == 'spot':
+        for dateitem in date_list:
+            daily_path_list.append(os.path.join(top_dir, "data", type, "daily", "klines", symbol,
+                            interval, "{}-{}-{}.csv".format(symbol, interval, dateitem)))
+    else:
+        for dateitem in date_list:
+            daily_path_list.append(os.path.join(top_dir, "data", "futures", type, "daily", "klines", symbol,
+                            interval, "{}-{}-{}.csv".format(symbol, interval, dateitem)))
     return daily_path_list
 
 
@@ -106,11 +111,18 @@ def merge_kilines_func(directory_to_scan, daily_path_list, directory_to_save):
     for daily_path in daily_path_list:
         if not os.path.exists(daily_path):
             continue
-        df = pd.read_csv(daily_path,
-                         names=column_names,
-                         header=None,
-                         parse_dates=[0],
-                         date_parser=date_parser)
+        if has_header(daily_path):
+            df = pd.read_csv(daily_path,
+                             names=column_names,
+                             header=1,
+                             parse_dates=[0],
+                             date_parser=date_parser)
+        else:
+            df = pd.read_csv(daily_path,
+                             names=column_names,
+                             header=None,
+                             parse_dates=[0],
+                             date_parser=date_parser)
         combined_df = pd.concat([combined_df, df], ignore_index=True)
 
     combined_df.sort_values(by='open_time', inplace=True)
