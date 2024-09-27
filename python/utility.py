@@ -88,13 +88,13 @@ def match_date_regex(arg_value, pat=re.compile(r'\d{4}-\d{2}-\d{2}')):
 def check_directory(arg_value):
   if os.path.exists(arg_value):
     while True:
-      option = input('Folder already exists! Do you want to overwrite it? y/n  ')
+      option = input('Folder already exists! Do you want to overwrite it, please enter n? y/n  ')
       if option != 'y' and option != 'n':
         print('Invalid Option!')
         continue
       elif option == 'y':
-        shutil.rmtree(arg_value)
-        break
+        #shutil.rmtree(arg_value)
+        continue
       else:
         break
   return arg_value
