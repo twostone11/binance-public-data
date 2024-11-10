@@ -128,6 +128,7 @@ def merge_kilines_func(directory_to_scan, daily_path_list, directory_to_save):
     combined_df.sort_values(by='open_time', inplace=True)
     combined_df.reset_index(drop=True, inplace=True)
     combined_df.ffill()
+    combined_df['open_time'] = combined_df['open_time'].dt.floor('S')
     combined_df.to_csv(directory_to_save, index=False)
 
 if __name__ == "__main__":
